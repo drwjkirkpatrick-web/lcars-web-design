@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  LCARS Base Template — minimal single-file starter (TNG 2369 palette)
+  Structure: TL elbow + title bar / left button column / one content panel.
+  Dependencies: Antonio (Google Fonts). No JS required. MIT licensed.
+  For the full component library see templates/lcars-components.css.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCARS // Base</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---- canon palette (TNG 2369) + geometry ---- */
+:root {
+  --golden-tanoi: #FFCC66; --tanoi: #FFCC99; --neon-carrot: #FF9933;
+  --atomic-tangerine: #FF9900; --anakiwa: #99CCFF; --danub: #6688CC;
+  --blue-bell: #9999CC; --lilac: #CC99CC; --hopbush: #CC6699;
+  --bar-h: 90px; --col-w: 150px; --gap: 8px;
+  --font: 'Antonio', 'Liberation Sans Narrow', 'Arial Narrow', sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #000; color: var(--atomic-tangerine);
+  font-family: var(--font); text-transform: uppercase; letter-spacing: 0.05em;
+  min-height: 100vh;
+}
+
+/* ---- frame geometry: column 1 = elbow full width (arm + extension) ---- */
+.frame {
+  min-height: 100vh;
+  padding: 16px 16px 16px 16px;
+  display: grid;
+  grid-template-columns: calc(var(--col-w) + 90px) 1fr;
+  grid-template-rows: var(--bar-h) 1fr;
+  gap: var(--gap);
+}
+
+/* ---- the elbow: rounded rect (col-w+90 wide) + inner black cutout ----
+   The horizontal arm extends 90px right of the button column; the ::after
+   carves out everything below bar-h and right of col-w, leaving the L.   */
+.elbow {
+  grid-column: 1; grid-row: 1 / 3;
+  align-self: start;
+  width: 100%;
+  height: calc(var(--bar-h) + 160px);
+  background: var(--golden-tanoi);
+  border-top-left-radius: 70px 50px;
+  position: relative;
+  overflow: hidden;
+}
+.elbow::after {
+  content: "";
+  position: absolute;
+  left: var(--col-w); top: var(--bar-h);
+  right: 0; bottom: 0;
+  background: #000;
+  border-top-left-radius: 35px 25px;
+}
+
+/* ---- title bar (right of elbow horizontal arm) ---- */
+.titlebar {
+  grid-column: 2; grid-row: 1;
+  display: flex; align-items: center;
+  background: var(--tanoi); color: #000;
+  font-size: 2.2rem; font-weight: 600;
+  padding: 0 24px;
+  border-top-right-radius: 45px; border-bottom-right-radius: 45px;
+  white-space: nowrap; overflow: hidden;
+}
+.titlebar .seg {
+  align-self: stretch; margin-left: auto; margin-right: -24px;
+  padding: 0 24px; display: flex; align-items: center;
+  background: var(--neon-carrot);
+}
+
+/* ---- button column (sits under the elbow's vertical arm, col-w wide) ---- */
+.buttons {
+  grid-column: 1; grid-row: 2;
+  width: var(--col-w);
+  display: flex; flex-direction: column; gap: var(--gap);
+  margin-top: 160px; /* clears the elbow's vertical arm */
+}
+.btn {
+  display: flex; align-items: center; justify-content: flex-end;
+  min-height: 44px; padding: 4px 14px;
+  background: var(--neon-carrot); color: #000;
+  font-weight: 600; font-size: 1.05rem;
+  white-space: nowrap; overflow: hidden;
+  cursor: pointer; user-select: none;
+}
+.btn:active { background: #FFFF99; }
+.btn.pill-l { border-top-left-radius: 22px; border-bottom-left-radius: 22px; }
+
+/* ---- content panel: sharp corners, 2px frame, title strip ---- */
+.content { grid-column: 2; grid-row: 2; }
+.panel { border: 2px solid var(--danub); background: #000; }
+.panel > .ptitle {
+  display: block; background: var(--danub); color: #000;
+  font-weight: 600; padding: 2px 12px; text-align: right;
+}
+.panel > .pbody { padding: 16px; font-size: 1.2rem; line-height: 1.5; }
+.pbody .v { color: var(--anakiwa); font-variant-numeric: tabular-nums; }
+
+/* ---- boot sweep: elements light up in DOM order ---- */
+@keyframes wipe { from { clip-path: inset(0 100% 0 0); opacity: .4; }
+                  to   { clip-path: inset(0 0% 0 0);  opacity: 1; } }
+.sweep { animation: wipe 280ms linear both; animation-delay: calc(var(--i, 0) * 60ms); }
+
+@media (max-width: 800px) {
+  :root { --bar-h: 56px; --col-w: 104px; }
+  .titlebar { font-size: 1.4rem; }
+  .elbow { border-top-left-radius: 45px 32px; }
+  .elbow::after { border-top-left-radius: 22px 16px; }
+}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- elbow lights up first -->
+  <div class="elbow sweep" style="--i:0"></div>
+
+  <!-- title bar -->
+  <header class="titlebar sweep" style="--i:1">
+    LCARS &middot; Base Console
+    <span class="seg">47-ALPHA</span>
+  </header>
+
+  <!-- button column -->
+  <nav class="buttons">
+    <div class="btn sweep" style="--i:2">Systems</div>
+    <div class="btn sweep" style="--i:3; background: var(--anakiwa)">Data</div>
+    <div class="btn sweep" style="--i:4; background: var(--blue-bell)">Sensors</div>
+    <div class="btn sweep" style="--i:5; background: var(--lilac)">Comms</div>
+    <div class="btn sweep pill-l" style="--i:6; background: var(--hopbush)">Alert</div>
+  </nav>
+
+  <!-- content -->
+  <main class="content">
+    <section class="panel sweep" style="--i:7">
+      <span class="ptitle">Status Overview</span>
+      <div class="pbody">
+        All systems nominal. Replace this panel with your content.<br>
+        Stardate: <span class="v">54101.7</span><br>
+        Grid reference: <span class="v">23-08-MARK-47</span><br>
+        Next step: read <span class="v">references/design-system.md</span> in the
+        lcars-web-design skill.
+      </div>
+    </section>
+  </main>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  LCARS Dashboard Template — full animated sensor/console dashboard
+  Features: boot sweep, blinking status, ticking readouts, CSS bar chart,
+  procedural Web Audio beeps (no audio files), red-alert toggle.
+  Palette: TNG 2369. Dependencies: Antonio font. MIT licensed.
+  Swap the demo data in the CONFIG section for your real sensors/API.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCARS // Environmental Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pale-canary: #FFFF99; --tanoi: #FFCC99; --golden-tanoi: #FFCC66;
+  --neon-carrot: #FF9933; --atomic-tangerine: #FF9900; --orange-peel: #FF9966;
+  --anakiwa: #99CCFF; --periwinkle: #CCDDFF; --dodger-pale: #5599FF;
+  --danub: #6688CC; --blue-bell: #9999CC; --bahama-blue: #006699;
+  --lilac: #CC99CC; --melrose: #9999FF; --hopbush: #CC6699;
+  --chestnut-rose: #CC6666; --red-damask: #DD6644;
+  --bar-h: 84px; --col-w: 150px; --gap: 8px;
+  --font: 'Antonio', 'Liberation Sans Narrow', 'Arial Narrow', sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #000; color: var(--atomic-tangerine);
+  font-family: var(--font); text-transform: uppercase; letter-spacing: 0.05em;
+  min-height: 100vh; overflow-x: hidden;
+}
+
+/* ---- frame grid: column 1 = elbow full width (arm + extension) ---- */
+.frame {
+  min-height: 100vh; padding: 14px;
+  display: grid;
+  grid-template-columns: calc(var(--col-w) + 90px) 1fr;
+  grid-template-rows: var(--bar-h) 1fr 36px;
+  gap: var(--gap);
+}
+
+/* ---- elbow: rounded rect + inner black cutout (L-shape) ---- */
+.elbow {
+  grid-column: 1; grid-row: 1 / 3; align-self: start;
+  width: 100%;
+  height: calc(var(--bar-h) + 150px);
+  background: var(--golden-tanoi);
+  border-top-left-radius: 64px 46px;
+  position: relative;
+  overflow: hidden;
+}
+.elbow::after {
+  content: ""; position: absolute;
+  left: var(--col-w); top: var(--bar-h);
+  right: 0; bottom: 0;
+  background: #000; border-top-left-radius: 32px 23px;
+}
+.elbow .elabel {
+  position: absolute; left: 0; bottom: 8px;
+  width: calc(var(--col-w) - 12px);
+  text-align: right; color: #000; font-weight: 600; font-size: 0.95rem;
+}
+
+/* ---- title bar ---- */
+.titlebar {
+  grid-column: 2; grid-row: 1;
+  display: flex; align-items: center;
+  background: var(--tanoi); color: #000;
+  font-size: 2rem; font-weight: 600; padding: 0 22px;
+  border-top-right-radius: 42px; border-bottom-right-radius: 42px;
+  white-space: nowrap; overflow: hidden;
+}
+.titlebar .seg {
+  align-self: stretch; margin-left: auto; margin-right: -22px;
+  padding: 0 22px; display: flex; align-items: center; gap: 10px;
+  background: var(--neon-carrot); font-size: 1.1rem;
+}
+
+/* ---- status dot ---- */
+.dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%;
+       background: var(--anakiwa); }
+@keyframes blink { 0%,49% {opacity:1;} 50%,100% {opacity:.15;} }
+.blink { animation: blink 1s steps(1) infinite; }
+.blink-fast { animation: blink .5s steps(1) infinite; }
+
+/* ---- button column (under the elbow's vertical arm, col-w wide) ---- */
+.buttons { grid-column: 1; grid-row: 2; width: var(--col-w);
+           display: flex; flex-direction: column;
+           gap: var(--gap); margin-top: 150px; }
+.btn {
+  display: flex; align-items: center; justify-content: flex-end;
+  min-height: 42px; padding: 4px 13px;
+  background: var(--neon-carrot); color: #000;
+  font-weight: 600; font-size: 1.1rem;
+  white-space: nowrap; overflow: hidden;
+  cursor: pointer; user-select: none;
+}
+.btn:active { background: var(--pale-canary); }
+.btn.pill-l { border-top-left-radius: 21px; border-bottom-left-radius: 21px; }
+
+/* ---- content ---- */
+.content { grid-column: 2; grid-row: 2; display: flex; flex-direction: column;
+           gap: var(--gap); }
+
+/* readout grid */
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: var(--gap); }
+.ro { display: flex; flex-direction: column; }
+.ro .lbl { background: var(--blue-bell); color: #000; font-size: .85rem;
+           font-weight: 600; letter-spacing: .1em; padding: 2px 10px;
+           text-align: right; }
+.ro .val { color: var(--anakiwa); font-size: 3rem; font-weight: 300;
+           text-align: right; padding: 2px 10px; line-height: 1.1;
+           font-variant-numeric: tabular-nums; }
+.ro .unit { color: var(--danub); font-size: .95rem; text-align: right;
+            padding-right: 10px; }
+
+/* panel */
+.panel { border: 2px solid var(--danub); background: #000; flex: 1; }
+.panel > .ptitle { display: block; background: var(--danub); color: #000;
+                   font-weight: 600; padding: 2px 12px; text-align: right; }
+.panel > .pbody { padding: 14px; }
+
+/* CSS bar chart — sensor history */
+.chart { display: flex; align-items: flex-end; gap: 6px; height: 150px; }
+.chart .bar { flex: 1; background: var(--danub); min-height: 4px; }
+.chart .bar.hot { background: var(--red-damask); }
+.chart-labels { display: flex; gap: 6px; margin-top: 4px; }
+.chart-labels span { flex: 1; text-align: center; font-size: .75rem;
+                     color: var(--danub); }
+
+/* key-value rows */
+.kv { display: flex; justify-content: space-between; gap: 12px;
+      padding: 2px 0; border-bottom: 1px dotted var(--bahama-blue);
+      font-size: 1.05rem; }
+.kv .v { color: var(--anakiwa); font-variant-numeric: tabular-nums; }
+
+/* ---- footer status bar ---- */
+.footer { grid-column: 1 / 3; grid-row: 3; display: flex; align-items: center;
+          gap: 12px; background: var(--blue-bell); color: #000;
+          font-size: .95rem; font-weight: 600; padding: 0 16px;
+          border-top-left-radius: 18px; border-top-right-radius: 18px; }
+.footer .fright { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+
+/* ---- boot sweep ---- */
+@keyframes wipe { from { clip-path: inset(0 100% 0 0); opacity: .4; }
+                  to   { clip-path: inset(0 0% 0 0);  opacity: 1; } }
+.sweep { animation: wipe 280ms linear both; animation-delay: calc(var(--i,0) * 55ms); }
+
+/* ---- red alert mode ---- */
+.alert-mode { --golden-tanoi: #DD6644; --tanoi: #CC6666; --neon-carrot: #DD6644; }
+@keyframes alertpulse { 0%,49% {filter:brightness(1);} 50%,100% {filter:brightness(1.35);} }
+.alert-mode .elbow, .alert-mode .titlebar { animation: alertpulse 1s steps(2) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep, .alert-mode .elbow, .alert-mode .titlebar { animation: none; }
+}
+@media (max-width: 800px) {
+  :root { --bar-h: 56px; --col-w: 104px; }
+  .titlebar { font-size: 1.3rem; }
+  .elbow { border-top-left-radius: 42px 30px; }
+  .elbow::after { border-top-left-radius: 20px 14px; }
+  .ro .val { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+<div class="frame" id="frame">
+
+  <div class="elbow sweep" style="--i:0"><span class="elabel">ENV-CTRL</span></div>
+
+  <header class="titlebar sweep" style="--i:1">
+    Environmental Monitor
+    <span class="seg"><span class="dot blink"></span> LIVE</span>
+  </header>
+
+  <nav class="buttons">
+    <div class="btn sweep" style="--i:2" onclick="beep()">Overview</div>
+    <div class="btn sweep" style="--i:3; background: var(--anakiwa)" onclick="beep(2200,.04)">Atmos</div>
+    <div class="btn sweep" style="--i:4; background: var(--blue-bell)" onclick="beep(2200,.04)">Power</div>
+    <div class="btn sweep" style="--i:5; background: var(--lilac)" onclick="beep(2200,.04)">Network</div>
+    <div class="btn sweep" style="--i:6; background: var(--hopbush)" onclick="beep(2200,.04)">Logs</div>
+    <div class="btn sweep pill-l" style="--i:7; background: var(--chestnut-rose)" onclick="toggleAlert()">Red Alert</div>
+  </nav>
+
+  <main class="content">
+    <section class="readouts sweep" style="--i:8">
+      <div class="ro"><span class="lbl">Temperature</span>
+        <span class="val" id="ro-temp">21.4</span><span class="unit">°C</span></div>
+      <div class="ro"><span class="lbl" style="background: var(--danub)">Humidity</span>
+        <span class="val" id="ro-hum">46.2</span><span class="unit">% RH</span></div>
+      <div class="ro"><span class="lbl" style="background: var(--lilac)">Pressure</span>
+        <span class="val" id="ro-pres">1013.2</span><span class="unit">hPa</span></div>
+      <div class="ro"><span class="lbl" style="background: var(--orange-peel)">CO₂</span>
+        <span class="val" id="ro-co2">512</span><span class="unit">ppm</span></div>
+    </section>
+
+    <section class="panel sweep" style="--i:9">
+      <span class="ptitle">Temperature · Last 24h</span>
+      <div class="pbody">
+        <div class="chart" id="chart"></div>
+        <div class="chart-labels">
+          <span>-24h</span><span>-18h</span><span>-12h</span><span>-6h</span><span>NOW</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel sweep" style="--i:10">
+      <span class="ptitle">Station Telemetry</span>
+      <div class="pbody">
+        <div class="kv"><span>Uptime</span><span class="v" id="kv-uptime">00:00:00</span></div>
+        <div class="kv"><span>Sensor bus</span><span class="v">I2C · 11 NODES · OK</span></div>
+        <div class="kv"><span>Uplink</span><span class="v">WLAN · -58 dBm</span></div>
+        <div class="kv"><span>Grid reference</span><span class="v">23-08-MARK-47</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer sweep" style="--i:11">
+    <span class="dot blink" style="background:#000"></span>
+    <span id="status-msg">ALL SYSTEMS NOMINAL</span>
+    <span class="fright">
+      <span id="stardate">SD 54101.7</span>
+      <span class="dot square blink-fast" style="background:#000"></span>
+    </span>
+  </footer>
+
+</div>
+
+<script>
+/* ================= CONFIG: swap demo data for your real sensors ===========
+   Point fetchTelemetry() at your API (e.g. a Flask weather station) and map
+   the response onto the readout elements. Everything else stays as-is.     */
+const CONFIG = { tickMs: 1000 };
+
+/* ---------------- procedural panel beeps (no audio files) ---------------- */
+let actx = null;
+function beep(freq = 1600, dur = 0.05) {
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(freq, actx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.6, actx.currentTime + dur);
+  g.gain.setValueAtTime(0.06, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+  o.connect(g).connect(actx.destination);
+  o.start(); o.stop(actx.currentTime + dur);
+}
+
+/* ---------------- red alert toggle ---------------- */
+let alertOn = false;
+function toggleAlert() {
+  alertOn = !alertOn;
+  document.getElementById('frame').classList.toggle('alert-mode', alertOn);
+  document.getElementById('status-msg').textContent =
+    alertOn ? 'RED ALERT — ALL HANDS TO STATIONS' : 'ALL SYSTEMS NOMINAL';
+  beep(alertOn ? 900 : 2200, alertOn ? 0.09 : 0.04);
+}
+
+/* ---------------- demo telemetry (replace with real fetch) ----------------
+   Canon rule: readouts tick INSTANTLY (no counting animations).           */
+const state = { temp: 21.4, hum: 46.2, pres: 1013.2, co2: 512 };
+function jitter(v, amt, lo, hi) {
+  return Math.min(hi, Math.max(lo, v + (Math.random() - 0.5) * amt));
+}
+function setText(id, txt) { document.getElementById(id).textContent = txt; }
+
+function fetchTelemetry() {
+  // DEMO: jitter around baseline. REAL: fetch('/api/sensors').then(...)
+  state.temp = jitter(state.temp, 0.2, 18, 28);
+  state.hum  = jitter(state.hum, 0.5, 30, 70);
+  state.pres = jitter(state.pres, 0.3, 990, 1030);
+  state.co2  = Math.round(jitter(state.co2, 6, 400, 900));
+  setText('ro-temp', state.temp.toFixed(1));
+  setText('ro-hum', state.hum.toFixed(1));
+  setText('ro-pres', state.pres.toFixed(1));
+  setText('ro-co2', state.co2);
+}
+
+/* ---------------- CSS bar chart (demo history) ---------------- */
+(function buildChart() {
+  const chart = document.getElementById('chart');
+  const hist = Array.from({length: 24}, (_, i) =>
+    20 + 4 * Math.sin(i / 24 * Math.PI * 2 - Math.PI / 2) + Math.random());
+  const lo = Math.min(...hist), hi = Math.max(...hist);
+  hist.forEach(v => {
+    const bar = document.createElement('div');
+    bar.className = 'bar' + (v > hi - 0.8 ? ' hot' : '');
+    bar.style.height = (10 + 90 * (v - lo) / (hi - lo)) + '%';
+    bar.title = v.toFixed(1) + ' °C';
+    chart.appendChild(bar);
+  });
+})();
+
+/* ---------------- uptime + stardate ---------------- */
+const t0 = Date.now();
+setInterval(() => {
+  const s = Math.floor((Date.now() - t0) / 1000);
+  const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+  const mm = String(Math.floor(s % 3600 / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  setText('kv-uptime', `${hh}:${mm}:${ss}`);
+  // whimsical stardate drift
+  setText('stardate', 'SD ' + (54101.7 + s / 86400).toFixed(2));
+}, 1000);
+
+setInterval(fetchTelemetry, CONFIG.tickMs);
+</script>
+</body>
+</html>

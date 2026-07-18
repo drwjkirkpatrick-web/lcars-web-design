@@ -1,0 +1,367 @@
+/* ==========================================================================
+   LCARS Components — pure-CSS component library for TNG-style interfaces
+   Palette: TNG 2369 (canon). Geometry per references/design-system.md §2.
+   No gradients. No shadows. No JS required for layout. MIT licensed.
+   ========================================================================== */
+
+/* ---------- Canon palette (TNG 2369) + geometry tokens ---------- */
+:root {
+  /* golds & oranges — frame, primary actions */
+  --lcars-pale-canary:      #FFFF99;
+  --lcars-tanoi:            #FFCC99;
+  --lcars-golden-tanoi:     #FFCC66;
+  --lcars-neon-carrot:      #FF9933;
+  --lcars-atomic-tangerine: #FF9900;
+  --lcars-orange-peel:      #FF9966;
+  /* blues — data */
+  --lcars-anakiwa:          #99CCFF;
+  --lcars-periwinkle:       #CCDDFF;
+  --lcars-dodger-pale:      #5599FF;
+  --lcars-dodger-soft:      #3366FF;
+  --lcars-danub:            #6688CC;
+  --lcars-blue-bell:        #9999CC;
+  --lcars-mariner:          #3366CC;
+  --lcars-bahama-blue:      #006699;
+  --lcars-indigo:           #4455BB;
+  --lcars-near-blue:        #0011EE;
+  --lcars-navy-blue:        #000088;
+  /* purples & pinks — nav, secondary */
+  --lcars-lilac:            #CC99CC;
+  --lcars-melrose:          #9999FF;
+  --lcars-hopbush:          #CC6699;
+  --lcars-lavender-purple:  #9977AA;
+  --lcars-cosmic:           #774466;
+  --lcars-eggplant:         #664466;
+  /* reds & browns — engineering, alert */
+  --lcars-chestnut-rose:    #CC6666;
+  --lcars-red-damask:       #DD6644;
+  --lcars-medium-carmine:   #AA5533;
+  --lcars-bourbon:          #BB6622;
+  --lcars-sandy-brown:      #EE9955;
+  --lcars-rust:             #BB4411;
+  --lcars-tamarillo:        #882211;
+  --lcars-husk:             #BBAA55;
+
+  --lcars-bg:               #000000;
+
+  /* geometry (design-system.md §2) — scale these together */
+  --lcars-bar-h:   90px;    /* elbow horizontal arm height */
+  --lcars-col-w:   150px;   /* elbow vertical arm width     */
+  --lcars-gap:     8px;     /* frame spacing                */
+  --lcars-r-outer: 70px 50px;
+  --lcars-r-inner: 35px 25px;
+
+  --lcars-font: 'Antonio', 'Liberation Sans Narrow', 'Arial Narrow', sans-serif;
+}
+
+/* ---------- base ---------- */
+.lcars-app {
+  background: var(--lcars-bg);
+  color: var(--lcars-atomic-tangerine);
+  font-family: var(--lcars-font);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ==========================================================================
+   THE ELBOW — rounded rect + inner black cutout (::after).
+   Orientations via .elbow-tl / .elbow-tr / .elbow-bl / .elbow-br.
+   Size it to your layout with inline width/height or a wrapper.
+   ========================================================================== */
+.lcars-elbow {
+  position: relative;
+  background: var(--lcars-golden-tanoi);
+  overflow: hidden;
+}
+.lcars-elbow::after {
+  content: "";
+  position: absolute;
+  background: var(--lcars-bg);
+}
+.elbow-tl { border-top-left-radius: var(--lcars-r-outer); }
+.elbow-tl::after {
+  left: var(--lcars-col-w); top: var(--lcars-bar-h);
+  right: 0; bottom: 0;
+  border-top-left-radius: var(--lcars-r-inner);
+}
+.elbow-tr { border-top-right-radius: var(--lcars-r-outer); }
+.elbow-tr::after {
+  right: var(--lcars-col-w); top: var(--lcars-bar-h);
+  left: 0; bottom: 0;
+  border-top-right-radius: var(--lcars-r-inner);
+}
+.elbow-bl { border-bottom-left-radius: var(--lcars-r-outer); }
+.elbow-bl::after {
+  left: var(--lcars-col-w); bottom: var(--lcars-bar-h);
+  right: 0; top: 0;
+  border-bottom-left-radius: var(--lcars-r-inner);
+}
+.elbow-br { border-bottom-right-radius: var(--lcars-r-outer); }
+.elbow-br::after {
+  right: var(--lcars-col-w); bottom: var(--lcars-bar-h);
+  left: 0; top: 0;
+  border-bottom-right-radius: var(--lcars-r-inner);
+}
+
+/* Elbow label — sits inside the vertical arm, right-aligned, canon */
+.lcars-elbow-label {
+  position: absolute;
+  left: 0; bottom: 10px;
+  width: calc(var(--lcars-col-w) - 12px);
+  text-align: right;
+  color: #000;
+  font-weight: 600;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   BARS — title bars, footers, section dividers.
+   ========================================================================== */
+.lcars-bar {
+  display: flex;
+  align-items: center;
+  height: var(--lcars-bar-h);
+  background: var(--lcars-tanoi);
+  color: #000;
+  font-size: 2.2rem;
+  font-weight: 600;
+  padding: 0 24px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.lcars-bar.slim { height: 40px; font-size: 1.1rem; }
+.bar-pill-l { border-top-left-radius: calc(var(--lcars-bar-h) / 2);
+              border-bottom-left-radius: calc(var(--lcars-bar-h) / 2); }
+.bar-pill-r { border-top-right-radius: calc(var(--lcars-bar-h) / 2);
+              border-bottom-right-radius: calc(var(--lcars-bar-h) / 2); }
+.bar-round  { border-radius: calc(var(--lcars-bar-h) / 2); }
+/* right-aligned text inside a bar */
+.lcars-bar .bar-right { margin-left: auto; }
+/* two-tone bar segment */
+.lcars-bar .bar-seg {
+  align-self: stretch;
+  margin-left: auto;
+  margin-right: -24px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  background: var(--lcars-neon-carrot);
+}
+
+/* ==========================================================================
+   BUTTONS — black text on colored bg, big hit targets (≥40px).
+   ========================================================================== */
+.lcars-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;         /* column buttons are right-aligned */
+  min-height: 44px;
+  padding: 4px 14px;
+  background: var(--lcars-neon-carrot);
+  color: #000;
+  font-weight: 600;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  font-family: var(--lcars-font);
+  text-decoration: none;
+}
+.lcars-btn:active {
+  background: var(--lcars-pale-canary);  /* press flash (animations.md §3) */
+  color: #000;
+}
+.btn-block  { border-radius: 0; }
+.btn-pill-l { border-top-left-radius: 22px; border-bottom-left-radius: 22px; }
+.btn-pill-r { border-top-right-radius: 22px; border-bottom-right-radius: 22px; }
+.btn-round  { border-radius: 22px; }
+.btn-center { justify-content: center; }
+
+/* vertical button column (continues under the elbow's arm) */
+.lcars-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lcars-gap);
+  width: var(--lcars-col-w);
+}
+
+/* horizontal button row (PADD / mobile pattern) */
+.lcars-row { display: flex; gap: var(--lcars-gap); }
+.lcars-row .lcars-btn { flex: 1; justify-content: center; }
+
+/* ==========================================================================
+   PANELS — sharp black rectangles, 2px colored frame, title strip on top.
+   ========================================================================== */
+.lcars-panel {
+  background: var(--lcars-bg);
+  border: 2px solid var(--lcars-danub);
+}
+.lcars-panel > .panel-title {
+  display: block;
+  background: var(--lcars-danub);
+  color: #000;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 2px 12px;
+  text-align: right;                 /* canon: panel titles right-aligned */
+}
+.lcars-panel > .panel-body { padding: 14px; }
+
+/* ==========================================================================
+   READOUTS — label + big number, number right-aligned, instant ticks.
+   ========================================================================== */
+.lcars-readout { display: flex; flex-direction: column; min-width: 160px; }
+.lcars-readout .ro-label {
+  background: var(--lcars-blue-bell);
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 2px 10px;
+  text-align: right;
+}
+.lcars-readout .ro-value {
+  color: var(--lcars-anakiwa);
+  font-size: 3.2rem;
+  font-weight: 300;
+  text-align: right;
+  padding: 2px 10px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.lcars-readout .ro-unit {
+  color: var(--lcars-danub);
+  font-size: 1rem;
+  text-align: right;
+  padding-right: 10px;
+}
+
+/* inline label.....value style */
+.lcars-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--lcars-bahama-blue);
+  font-size: 1.1rem;
+}
+.lcars-kv .v { color: var(--lcars-anakiwa); font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   STATUS DOTS & LIGHTS — hard blinking only (steps).
+   ========================================================================== */
+.lcars-status-dot {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--lcars-anakiwa);
+  vertical-align: middle;
+}
+.lcars-status-dot.square { border-radius: 0; }
+
+/* ==========================================================================
+   COLOR UTILITY CLASSES — every canon color as bg / fg.
+   ========================================================================== */
+.lcars-bg-pale-canary      { background: var(--lcars-pale-canary) !important; }
+.lcars-bg-tanoi            { background: var(--lcars-tanoi) !important; }
+.lcars-bg-golden-tanoi     { background: var(--lcars-golden-tanoi) !important; }
+.lcars-bg-neon-carrot      { background: var(--lcars-neon-carrot) !important; }
+.lcars-bg-atomic-tangerine { background: var(--lcars-atomic-tangerine) !important; }
+.lcars-bg-orange-peel      { background: var(--lcars-orange-peel) !important; }
+.lcars-bg-anakiwa          { background: var(--lcars-anakiwa) !important; }
+.lcars-bg-periwinkle       { background: var(--lcars-periwinkle) !important; }
+.lcars-bg-dodger-pale      { background: var(--lcars-dodger-pale) !important; }
+.lcars-bg-dodger-soft      { background: var(--lcars-dodger-soft) !important; }
+.lcars-bg-danub            { background: var(--lcars-danub) !important; }
+.lcars-bg-blue-bell        { background: var(--lcars-blue-bell) !important; }
+.lcars-bg-mariner          { background: var(--lcars-mariner) !important; }
+.lcars-bg-bahama-blue      { background: var(--lcars-bahama-blue) !important; }
+.lcars-bg-indigo           { background: var(--lcars-indigo) !important; }
+.lcars-bg-lilac            { background: var(--lcars-lilac) !important; }
+.lcars-bg-melrose          { background: var(--lcars-melrose) !important; }
+.lcars-bg-hopbush          { background: var(--lcars-hopbush) !important; }
+.lcars-bg-lavender-purple  { background: var(--lcars-lavender-purple) !important; }
+.lcars-bg-cosmic           { background: var(--lcars-cosmic) !important; }
+.lcars-bg-eggplant         { background: var(--lcars-eggplant) !important; }
+.lcars-bg-chestnut-rose    { background: var(--lcars-chestnut-rose) !important; }
+.lcars-bg-red-damask       { background: var(--lcars-red-damask) !important; }
+.lcars-bg-medium-carmine   { background: var(--lcars-medium-carmine) !important; }
+.lcars-bg-bourbon          { background: var(--lcars-bourbon) !important; }
+.lcars-bg-sandy-brown      { background: var(--lcars-sandy-brown) !important; }
+.lcars-bg-rust             { background: var(--lcars-rust) !important; }
+.lcars-bg-husk             { background: var(--lcars-husk) !important; }
+
+.lcars-fg-anakiwa          { color: var(--lcars-anakiwa) !important; }
+.lcars-fg-periwinkle       { color: var(--lcars-periwinkle) !important; }
+.lcars-fg-atomic-tangerine { color: var(--lcars-atomic-tangerine) !important; }
+.lcars-fg-golden-tanoi     { color: var(--lcars-golden-tanoi) !important; }
+.lcars-fg-lilac            { color: var(--lcars-lilac) !important; }
+.lcars-fg-danub            { color: var(--lcars-danub) !important; }
+.lcars-fg-red-damask       { color: var(--lcars-red-damask) !important; }
+.lcars-fg-black            { color: #000 !important; }
+
+/* ==========================================================================
+   ANIMATIONS — canon moves (references/animations.md). steps() and linear
+   only; nothing eases like a phone app.
+   ========================================================================== */
+@keyframes lcars-wipe {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+  to   { clip-path: inset(0 0% 0 0);   opacity: 1; }
+}
+.lcars-sweep-in {
+  animation: lcars-wipe 280ms linear both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@keyframes lcars-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+.lcars-blink      { animation: lcars-blink 1s steps(1) infinite; }
+.lcars-blink-fast { animation: lcars-blink 0.5s steps(1) infinite; }
+.lcars-blink-slow { animation: lcars-blink 2s steps(1) infinite; }
+
+@keyframes lcars-flash {
+  from { filter: brightness(1.8); }
+  to   { filter: brightness(1); }
+}
+.lcars-flash { animation: lcars-flash 150ms linear; }
+
+/* red alert mode — swap golds→reds, pulse the frame */
+.lcars-alert-mode {
+  --lcars-golden-tanoi: #DD6644;
+  --lcars-tanoi:        #CC6666;
+  --lcars-neon-carrot:  #DD6644;
+}
+@keyframes lcars-alert-pulse {
+  0%, 49%   { filter: brightness(1); }
+  50%, 100% { filter: brightness(1.35); }
+}
+.lcars-alert-mode .lcars-elbow,
+.lcars-alert-mode .lcars-bar {
+  animation: lcars-alert-pulse 1s steps(2) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lcars-sweep-in, .lcars-alert-mode .lcars-elbow,
+  .lcars-alert-mode .lcars-bar { animation: none; }
+}
+
+/* ==========================================================================
+   RESPONSIVE — shrink geometry, keep the grammar.
+   ========================================================================== */
+@media (max-width: 800px) {
+  :root {
+    --lcars-bar-h: 56px;
+    --lcars-col-w: 104px;
+    --lcars-r-outer: 45px 32px;
+    --lcars-r-inner: 22px 16px;
+  }
+  .lcars-bar { font-size: 1.4rem; }
+  .lcars-readout .ro-value { font-size: 2.2rem; }
+}
